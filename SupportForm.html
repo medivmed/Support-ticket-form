@@ -17,47 +17,78 @@
     }
     .form-container {
       background-color: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      width: auto;
+      padding: 20px 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       max-width: 400px;
-      margin: 20px;
+      width: 100%;
       text-align: center;
     }
     .form-container h2 {
       margin-bottom: 20px;
-      background: -webkit-linear-gradient(45deg, #1e3c72, #2a5298);
+      background: linear-gradient(45deg, #00C4CC, #0066CC);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      font-size: 24px;
     }
-    .form-container input, .form-container textarea, .form-container button {
+    .form-group {
+      margin-bottom: 15px;
+      position: relative;
+    }
+    .form-group input, .form-group textarea {
       width: calc(100% - 20px);
       padding: 10px;
-      margin: 10px;
+      margin: 10px 10px;
       border: 1px solid #ccc;
       border-radius: 4px;
       display: block;
       margin-left: auto;
       margin-right: auto;
+      font-family: 'Nunito', sans-serif;
     }
-    .form-container textarea {
+    .form-group textarea {
       resize: vertical;
+      min-height: 80px;
     }
-    .form-container button {
-      background-color: #28a745;
+    .form-group button {
+      width: calc(100% - 20px);
+      padding: 10px;
+      margin: 10px 10px;
+      background-color: #ccc; /* Greyed out color when disabled */
       color: #fff;
       border: none;
-      cursor: pointer;
-      text-align: center;
+      border-radius: 5px;
+      cursor: not-allowed;
+      font-size: 16px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      font-family: 'Nunito', sans-serif;
     }
-    .form-container button:hover {
-      background-color: #218838;
+    .form-group button.enabled {
+      background: linear-gradient(45deg, #00C4CC, #0066CC); /* Same gradient as the title */
+      cursor: pointer;
+    }
+    .form-group button.enabled:hover {
+      background: linear-gradient(45deg, #00A3A6, #0049A0); /* Darker gradient on hover */
     }
     .success-message {
       display: none;
       color: green;
       margin-top: 20px;
+    }
+    .error-message {
+      color: red;
+      margin-top: 5px;
+      font-size: 14px;
+      display: none;
+    }
+    .char-counter {
+      position: absolute;
+      bottom: 0;
+      right: 10px;
+      font-size: 12px;
+      color: #555;
     }
   </style>
 </head>
@@ -65,11 +96,26 @@
   <div class="form-container">
     <h2>Support Ticket</h2>
     <form id="supportForm">
-      <input name="Name" type="text" placeholder="Name" required>
-      <input name="Email" type="email" placeholder="Email" required>
-      <input name="Phone Number" type="tel" placeholder="Phone Number" required>
-      <textarea name="Issue Summary" placeholder="Issue Summary" required></textarea>
-      <button type="submit">Submit</button>
+      <div class="form-group">
+        <input id="nameInput" name="Name" type="text" pattern="[a-zA-Z\s]+" title="Enter a valid name (letters and spaces only)" placeholder="Name" required>
+        <div class="error-message" id="nameInputError">Please enter a valid name (letters and spaces only).</div>
+      </div>
+      <div class="form-group">
+        <input id="emailInput" name="Email" type="email" placeholder="Email" required>
+        <div class="error-message" id="emailInputError">Please enter a valid email address.</div>
+      </div>
+      <div class="form-group">
+        <input id="phoneInput" name="Phone Number" type="tel" pattern="^\+41\s?\d{2}\s?\d{3}\s?\d{2}\s?\d{2}$|^0\s?\d{2}\s?\d{3}\s?\d{2}\s?\d{2}$" title="Enter a valid Swiss phone number" placeholder="Phone Number" required>
+        <div class="error-message" id="phoneInputError">Please enter a valid Swiss phone number.</div>
+      </div>
+      <div class="form-group">
+        <textarea id="issueTextarea" name="Issue Summary" maxlength="200" placeholder="Issue Summary" required></textarea>
+        <div class="char-counter" id="charCounter">200 characters remaining</div>
+        <div class="error-message" id="issueTextareaError">Please enter a summary of up to 200 characters.</div>
+      </div>
+      <div class="form-group">
+        <button type="submit" id="submitButton" disabled>Submit</button>
+      </div>
     </form>
     <div class="success-message" id="successMessage">
       Your query has been successfully recorded!
@@ -77,28 +123,132 @@
   </div>
 
   <script>
-    document.getElementById('supportForm').addEventListener('submit', function(event) {
-      event.preventDefault(); // Prevent default form submission
-      var formData = new FormData(this);
-      
-      fetch('https://script.google.com/macros/s/AKfycbynxN0zKKqEylaODcXnNxTUzMTwGbef18qbwX8i_-Vo2UqOxwt1UJConW3QRORFcJ9a/exec', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.result === 'success') {
-          document.getElementById('supportForm').style.display = 'none';
-          document.getElementById('successMessage').style.display = 'block';
+    async function checkEmailValidity(email) {
+      const apiKey = 'e7f4aa4f57a56212d12b7acb30e7674201f550bb'; // Your API key
+      const url = `https://api.hunter.io/v2/email-verifier?email=${encodeURIComponent(email)}&api_key=${apiKey}`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        return data.data.status === 'valid';
+      } catch (error) {
+        console.error('Error checking email validity:', error);
+        return false;
+      }
+    }
+
+    function validateField(input) {
+      const errorId = input.id + 'Error';
+      const errorElement = document.getElementById(errorId);
+
+      if (errorElement) {
+        if (!input.checkValidity()) {
+          errorElement.style.display = 'block';
         } else {
-          alert('There was an error with your submission. Please try again.');
+          errorElement.style.display = 'none';
         }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        alert('There was an error with your submission. Please try again.');
-      });
+      }
+    }
+
+    function validateForm() {
+      var form = document.getElementById('supportForm');
+      var submitButton = document.getElementById('submitButton');
+      var isValid = form.checkValidity();
+      submitButton.disabled = !isValid;
+      submitButton.classList.toggle('enabled', isValid);
+    }
+
+    document.getElementById('nameInput').addEventListener('blur', function() {
+      validateField(this);
     });
+
+    document.getElementById('emailInput').addEventListener('blur', async function() {
+      validateField(this);
+      const email = this.value;
+      const emailPatternValid = this.checkValidity();
+      
+      if (emailPatternValid) {
+        // Email pattern is valid; no message displayed
+        document.getElementById('emailInputError').style.display = 'none';
+      } else {
+        // Email pattern is invalid
+        document.getElementById('emailInputError').style.display = 'block';
+      }
+    });
+
+    document.getElementById('phoneInput').addEventListener('blur', function() {
+      validateField(this);
+    });
+
+    document.getElementById('issueTextarea').addEventListener('blur', function() {
+      validateField(this);
+    });
+
+    document.getElementById('supportForm').addEventListener('input', function(event) {
+      validateForm();
+      if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+        validateField(event.target);
+      }
+    });
+
+    document.getElementById('supportForm').addEventListener('submit', async function(event) {
+      event.preventDefault(); // Prevent default form submission
+
+      var nameInput = document.getElementById('nameInput');
+      var emailInput = document.getElementById('emailInput');
+      var phoneInput = document.getElementById('phoneInput');
+      var issueTextarea = document.getElementById('issueTextarea');
+
+      validateField(nameInput);
+      validateField(emailInput);
+      validateField(phoneInput);
+      validateField(issueTextarea);
+
+      var isValid = nameInput.checkValidity() &&
+                    emailInput.checkValidity() &&
+                    phoneInput.checkValidity() &&
+                    issueTextarea.checkValidity();
+
+      if (isValid) {
+        const email = emailInput.value;
+        const isEmailValid = await checkEmailValidity(email);
+
+        if (isEmailValid) {
+          var formData = new FormData(this);
+
+          fetch('https://script.google.com/macros/s/AKfycbynxN0zKKqEylaODcXnNxTUzMTwGbef18qbwX8i_-Vo2UqOxwt1UJConW3QRORFcJ9a/exec', {
+            method: 'POST',
+            body: formData
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.result === 'success') {
+              document.getElementById('supportForm').style.display = 'none';
+              document.getElementById('successMessage').style.display = 'block';
+            } else {
+              alert('There was an error with your submission. Please try again.');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('There was an error with your submission. Please try again.');
+          });
+        } else {
+          document.getElementById('emailInputError').textContent = 'This email address does not exist. Please verify your email.';
+          document.getElementById('emailInputError').style.display = 'block';
+          document.getElementById('submitButton').disabled = true; // Ensure button remains disabled
+          document.getElementById('submitButton').classList.remove('enabled'); // Remove enabled class
+        }
+      }
+    });
+
+    document.getElementById('issueTextarea').addEventListener('input', function() {
+      const remaining = 200 - this.value.length;
+      document.getElementById('charCounter').textContent = `${remaining} characters remaining`;
+    });
+
+    // Initial validation check
+    validateForm();
   </script>
 </body>
 </html>
