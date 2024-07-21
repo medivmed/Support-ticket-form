@@ -64,6 +64,7 @@
       margin-left: auto;
       margin-right: auto;
       font-family: 'Nunito', sans-serif;
+      position: relative;
     }
     .form-group button.enabled {
       background: linear-gradient(45deg, #00C4CC, #0066CC); /* Same gradient as the title */
@@ -71,6 +72,23 @@
     }
     .form-group button.enabled:hover {
       background: linear-gradient(45deg, #00A3A6, #0049A0); /* Darker gradient on hover */
+    }
+    .form-group button .loader {
+      display: none;
+      border: 4px solid #f3f3f3;
+      border-radius: 50%;
+      border-top: 4px solid #3498db;
+      width: 12px;
+      height: 12px;
+      animation: spin 2s linear infinite;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    @keyframes spin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
     }
     .success-message {
       display: none;
@@ -113,12 +131,18 @@
         <div class="char-counter" id="charCounter">200 characters remaining</div>
         <div class="error-message" id="issueTextareaError">Please enter a summary of up to 200 characters.</div>
       </div>
+      <input type="hidden" id="ticketNumberInput" name="Ticket Number"> <!-- Hidden field for ticket number -->
       <div class="form-group">
-        <button type="submit" id="submitButton" disabled>Submit</button>
+        <button type="submit" id="submitButton" disabled>
+          <span class="button-text">Submit</span>
+          <div class="loader" id="buttonLoader"></div>
+        </button>
       </div>
     </form>
     <div class="success-message" id="successMessage">
-      Your query has been successfully recorded!
+      <p>Your query has been successfully recorded!</p>
+      <p>Your ticket number is: <span id="ticketNumberDisplay"></span></p>
+      <p>We will reach out to you as soon as possible via email or phone number to keep you updated about your query.</p>
     </div>
   </div>
 
@@ -158,6 +182,15 @@
       submitButton.classList.toggle('enabled', isValid);
     }
 
+    function generateTicketNumber() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let ticketNumber = '';
+      for (let i = 0; i < 8; i++) {
+        ticketNumber += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return ticketNumber;
+    }
+
     document.getElementById('nameInput').addEventListener('blur', function() {
       validateField(this);
     });
@@ -194,61 +227,73 @@
     document.getElementById('supportForm').addEventListener('submit', async function(event) {
       event.preventDefault(); // Prevent default form submission
 
+      var form = document.getElementById('supportForm');
       var nameInput = document.getElementById('nameInput');
       var emailInput = document.getElementById('emailInput');
       var phoneInput = document.getElementById('phoneInput');
       var issueTextarea = document.getElementById('issueTextarea');
+      var ticketNumberInput = document.getElementById('ticketNumberInput');
+      var ticketNumberDisplay = document.getElementById('ticketNumberDisplay');
+      var buttonLoader = document.getElementById('buttonLoader');
+      var submitButton = document.getElementById('submitButton');
 
-      validateField(nameInput);
-      validateField(emailInput);
-      validateField(phoneInput);
-      validateField(issueTextarea);
-
-      var isValid = nameInput.checkValidity() &&
-                    emailInput.checkValidity() &&
-                    phoneInput.checkValidity() &&
-                    issueTextarea.checkValidity();
-
-      if (isValid) {
-        const email = emailInput.value;
-        const isEmailValid = await checkEmailValidity(email);
-
-        if (isEmailValid) {
-          var formData = new FormData(this);
-
-          fetch('https://script.google.com/macros/s/AKfycbynxN0zKKqEylaODcXnNxTUzMTwGbef18qbwX8i_-Vo2UqOxwt1UJConW3QRORFcJ9a/exec', {
-            method: 'POST',
-            body: formData
-          })
-          .then(response => response.json())
-          .then(data => {
-            if (data.result === 'success') {
-              document.getElementById('supportForm').style.display = 'none';
-              document.getElementById('successMessage').style.display = 'block';
-            } else {
-              alert('There was an error with your submission. Please try again.');
-            }
-          })
-          .catch(error => {
-            console.error('Error:', error);
-            alert('There was an error with your submission. Please try again.');
-          });
-        } else {
-          document.getElementById('emailInputError').textContent = 'This email address does not exist. Please verify your email.';
-          document.getElementById('emailInputError').style.display = 'block';
-          document.getElementById('submitButton').disabled = true; // Ensure button remains disabled
-          document.getElementById('submitButton').classList.remove('enabled'); // Remove enabled class
-        }
+      // Validate form before submission
+      var isValid = form.checkValidity();
+      if (!isValid) {
+        return;
       }
+
+      buttonLoader.style.display = 'block';
+      submitButton.disabled = true;
+      submitButton.querySelector('.button-text').textContent = 'Submitting...';
+
+      var emailValid = await checkEmailValidity(emailInput.value);
+      if (!emailValid) {
+        document.getElementById('emailInputError').textContent = 'Invalid email address.';
+        document.getElementById('emailInputError').style.display = 'block';
+        buttonLoader.style.display = 'none';
+        submitButton.disabled = false;
+        submitButton.querySelector('.button-text').textContent = 'Submit';
+        return;
+      }
+
+      var ticketNumber = generateTicketNumber();
+      ticketNumberInput.value = ticketNumber;
+
+      var formData = new FormData(form);
+
+      fetch('https://script.google.com/macros/s/AKfycbynxN0zKKqEylaODcXnNxTUzMTwGbef18qbwX8i_-Vo2UqOxwt1UJConW3QRORFcJ9a/exec', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.result === 'success') {
+          document.getElementById('supportForm').style.display = 'none';
+          ticketNumberDisplay.textContent = ticketNumber;
+          document.getElementById('successMessage').style.display = 'block';
+        } else {
+          alert('There was an error with your submission. Please try again.');
+        }
+      })
+      .catch(error => {
+        alert('There was an error with your submission. Please try again.');
+        console.error('Error:', error);
+      })
+      .finally(() => {
+        buttonLoader.style.display = 'none';
+        submitButton.disabled = false;
+        submitButton.querySelector('.button-text').textContent = 'Submit';
+      });
     });
 
     document.getElementById('issueTextarea').addEventListener('input', function() {
-      const remaining = 200 - this.value.length;
-      document.getElementById('charCounter').textContent = `${remaining} characters remaining`;
+      var maxLength = 200;
+      var currentLength = this.value.length;
+      var counter = document.getElementById('charCounter');
+      var remaining = maxLength - currentLength;
+      counter.textContent = remaining + ' characters remaining';
     });
-
-    // Initial validation check
-    validateForm();
   </script>
 </body>
 </html>
