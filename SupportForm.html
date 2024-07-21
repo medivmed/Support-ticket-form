@@ -92,9 +92,35 @@
     }
     .success-message {
       display: none;
-      color: green;
+      color: rgb(4, 6, 4);
       margin-top: 20px;
     }
+   
+    @keyframes pulse {
+  0% {
+    background-color: #f8f9fa;
+    transform: scale(1);
+  }
+  50% {
+    background-color: #e9ecef; /* Slightly darker */
+    transform: scale(1.02);
+  }
+  100% {
+    background-color: #f8f9fa;
+    transform: scale(1);
+  }
+}
+
+#ticketNumberDisplay {
+  animation: pulse 1.5s infinite;
+  border: 2px solid #007bff; /* Blue border */
+  border-radius: 5px; /* Rounded corners */
+  padding: 5px 10px; /* Spacing around the text */
+  font-weight: bold; /* Make the text bold */
+  color: #007bff; /* Blue text color */
+}
+
+
     .error-message {
       color: red;
       margin-top: 5px;
@@ -141,7 +167,7 @@
     </form>
     <div class="success-message" id="successMessage">
       <p>Your query has been successfully recorded!</p>
-      <p>Your ticket number is: <span id="ticketNumberDisplay"></span></p>
+      <p>Your ticket number is: <B><span id="ticketNumberDisplay"></B></span></p>
       <p>We will reach out to you as soon as possible via email or phone number to keep you updated about your query.</p>
     </div>
   </div>
@@ -297,3 +323,16 @@
   </script>
 </body>
 </html>
+<script type="text/javascript">
+  (function(d, t) {
+      var v = d.createElement(t), s = d.getElementsByTagName(t)[0];
+      v.onload = function() {
+        window.voiceflow.chat.load({
+          verify: { projectID: '669283ab29af6471d22d5307' },
+          url: 'https://general-runtime.voiceflow.com',
+          versionID: 'production'
+        });
+      }
+      v.src = "https://cdn.voiceflow.com/widget/bundle.mjs"; v.type = "text/javascript"; s.parentNode.insertBefore(v, s);
+  })(document, 'script');
+</script>
