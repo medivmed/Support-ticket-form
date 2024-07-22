@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Fat Plus Plan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f9;
+            margin: 0;
+        }
+
+        .container {
+            width: auto;
+            max-width: 300px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: white;
+            text-align: center;
+        }
+
+        .header {
+            background-image: linear-gradient(to right, #fe403a, #bc0600);
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .title {
+            background: linear-gradient(to right, #35bec4, #039ac8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 24px;
+            font-weight: bolder;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .currecy {
+            transform: rotate(-90deg);
+            color: red;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .pricecontainer {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .price {
+            color: red;
+            font-size: 42px;
+            font-weight: 900;
+        }
+
+        .original-price {
+            color: #00cccc;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .original-price .crossed {
+            text-decoration: line-through;
+            text-decoration-color: red;
+            text-decoration-thickness: 3px;
+        }
+
+        .discount {
+            color: gray;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .button {
+            background-color: red;
+            color: white;
+            padding: 10px 40px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 20px;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .button:hover {
+            background-color: #cc0000;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        table {
+            width: 100%;
+            margin: 0 0;
+            text-align: center;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            color: gray;
+            font-weight: bold;
+        }
+
+        td {
+            font-size: 16px;
+        }
+
+        .learn-more {
+            color: gray;
+            font-size: 12px;
+            text-align: center;
+            margin: 10px 0;
+            display: block;
+        }
+
+        .icon {
+            width: 16px;
+            height: 16px;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-label {
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            59% discount
+        </div>
+        <div class="title">
+            Super Fat Plus
+        </div>
+        <div class="content">
+            <table>
+                <tr>
+                    <th></th>
+                    <th>Switzerland</th>
+                    <th>Roaming</th>
+                </tr>
+                <tr>
+                    <td> <img src="https://img.icons8.com/ios-filled/50/000000/wifi.png" class="icon" />Data</td>
+                    <td> Unlimited high-speed</td>
+                    <td>5 GB</td>
+                </tr>
+                <tr>
+                    <td><img src="https://img.icons8.com/ios-filled/50/000000/phone.png" class="icon" />Calls</td>
+                    <td>Unlimited</td>
+                    <td>500 min.</td>
+                </tr>
+            </table>
+            <div class="pricecontainer">
+                <div class="currecy">CHF</div>
+                <span class="price">
+                    39.90
+                </span>
+            </div>
+            <div class="original-price">
+                <span class="crossed">instead of 99.-</span>
+                <span>per month</span>
+            </div>
+            <div class="discount">
+                Discount forever
+            </div>
+            <a href="https://checkout.yallo.ch/en/start/YAL_SUPER_FAT_PLUS?ChatSales=true" class="button">Order now</a>
+            <a href="#" class="learn-more">Learn more</a>
+        </div>
+    </div>
+</body>
+
+</html>
