@@ -95,31 +95,29 @@
       color: rgb(4, 6, 4);
       margin-top: 20px;
     }
-   
     @keyframes pulse {
-  0% {
-    background-color: #f8f9fa;
-    transform: scale(1);
-  }
-  50% {
-    background-color: #e9ecef; /* Slightly darker */
-    transform: scale(1.02);
-  }
-  100% {
-    background-color: #f8f9fa;
-    transform: scale(1);
-  }
-}
+      0% {
+        background-color: #f8f9fa;
+        transform: scale(1);
+      }
+      50% {
+        background-color: #e9ecef; /* Slightly darker */
+        transform: scale(1.02);
+      }
+      100% {
+        background-color: #f8f9fa;
+        transform: scale(1);
+      }
+    }
 
-#ticketNumberDisplay {
-  animation: pulse 1.5s infinite;
-  border: 2px solid #007bff; /* Blue border */
-  border-radius: 5px; /* Rounded corners */
-  padding: 5px 10px; /* Spacing around the text */
-  font-weight: bold; /* Make the text bold */
-  color: #007bff; /* Blue text color */
-}
-
+    #ticketNumberDisplay {
+      animation: pulse 1.5s infinite;
+      border: 2px solid #007bff; /* Blue border */
+      border-radius: 5px; /* Rounded corners */
+      padding: 5px 10px; /* Spacing around the text */
+      font-weight: bold; /* Make the text bold */
+      color: #007bff; /* Blue text color */
+    }
 
     .error-message {
       color: red;
@@ -200,6 +198,20 @@
       }
     }
 
+    function getCurrentDateTime() {
+    const now = new Date();
+    
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+    const year = now.getFullYear();
+    
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    
+    return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+}
+
     function validateForm() {
       var form = document.getElementById('supportForm');
       var submitButton = document.getElementById('submitButton');
@@ -224,15 +236,23 @@
     document.getElementById('emailInput').addEventListener('blur', async function() {
       validateField(this);
       const email = this.value;
-      const emailPatternValid = this.checkValidity();
-      
-      if (emailPatternValid) {
-        // Email pattern is valid; no message displayed
+      if (this.checkValidity()) {
         document.getElementById('emailInputError').style.display = 'none';
+        
+        const isValid = await checkEmailValidity(email);
+        if (!isValid) {
+          document.getElementById('emailInputError').innerText = 'Email address is not valid.';
+          document.getElementById('emailInputError').style.display = 'block';
+        } else {
+          document.getElementById('emailInputError').innerText = 'Please enter a valid email address.';
+          document.getElementById('emailInputError').style.display = 'none';
+        }
       } else {
-        // Email pattern is invalid
+        // Email pattern is invalid; error message already displayed by validateField
         document.getElementById('emailInputError').style.display = 'block';
       }
+
+      validateForm();
     });
 
     document.getElementById('phoneInput').addEventListener('blur', function() {
@@ -243,83 +263,80 @@
       validateField(this);
     });
 
-    document.getElementById('supportForm').addEventListener('input', function(event) {
+    document.getElementById('supportForm').addEventListener('input', function() {
       validateForm();
-      if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
-        validateField(event.target);
-      }
-    });
-
-    document.getElementById('supportForm').addEventListener('submit', async function(event) {
-      event.preventDefault(); // Prevent default form submission
-
-      var form = document.getElementById('supportForm');
-      var nameInput = document.getElementById('nameInput');
-      var emailInput = document.getElementById('emailInput');
-      var phoneInput = document.getElementById('phoneInput');
-      var issueTextarea = document.getElementById('issueTextarea');
-      var ticketNumberInput = document.getElementById('ticketNumberInput');
-      var ticketNumberDisplay = document.getElementById('ticketNumberDisplay');
-      var buttonLoader = document.getElementById('buttonLoader');
-      var submitButton = document.getElementById('submitButton');
-
-      // Validate form before submission
-      var isValid = form.checkValidity();
-      if (!isValid) {
-        return;
-      }
-
-      buttonLoader.style.display = 'block';
-      submitButton.disabled = true;
-      submitButton.querySelector('.button-text').textContent = 'Submitting...';
-
-      var emailValid = await checkEmailValidity(emailInput.value);
-      if (!emailValid) {
-        document.getElementById('emailInputError').textContent = 'Invalid email address.';
-        document.getElementById('emailInputError').style.display = 'block';
-        buttonLoader.style.display = 'none';
-        submitButton.disabled = false;
-        submitButton.querySelector('.button-text').textContent = 'Submit';
-        return;
-      }
-
-      var ticketNumber = generateTicketNumber();
-      ticketNumberInput.value = ticketNumber;
-
-      var formData = new FormData(form);
-
-      fetch('https://script.google.com/macros/s/AKfycbynxN0zKKqEylaODcXnNxTUzMTwGbef18qbwX8i_-Vo2UqOxwt1UJConW3QRORFcJ9a/exec', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.result === 'success') {
-          document.getElementById('supportForm').style.display = 'none';
-          ticketNumberDisplay.textContent = ticketNumber;
-          document.getElementById('successMessage').style.display = 'block';
-        } else {
-          alert('There was an error with your submission. Please try again.');
-        }
-      })
-      .catch(error => {
-        alert('There was an error with your submission. Please try again.');
-        console.error('Error:', error);
-      })
-      .finally(() => {
-        buttonLoader.style.display = 'none';
-        submitButton.disabled = false;
-        submitButton.querySelector('.button-text').textContent = 'Submit';
-      });
     });
 
     document.getElementById('issueTextarea').addEventListener('input', function() {
-      var maxLength = 200;
-      var currentLength = this.value.length;
-      var counter = document.getElementById('charCounter');
-      var remaining = maxLength - currentLength;
-      counter.textContent = remaining + ' characters remaining';
+      const maxLength = this.getAttribute('maxlength');
+      const currentLength = this.value.length;
+      const remainingCharacters = maxLength - currentLength;
+      document.getElementById('charCounter').innerText = `${remainingCharacters} characters remaining`;
     });
+
+    document.getElementById('supportForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+
+      const submitButton = document.getElementById('submitButton');
+      const buttonText = document.querySelector('.button-text');
+      const buttonLoader = document.getElementById('buttonLoader');
+
+      submitButton.disabled = true;
+      submitButton.classList.remove('enabled');
+      buttonText.style.display = 'none';
+      buttonLoader.style.display = 'inline-block';
+
+      const ticketNumber = generateTicketNumber();
+      document.getElementById('ticketNumberInput').value = ticketNumber;
+
+      const formData = new FormData(event.target);
+      const data = {};
+      formData.forEach((value, key) => (data[key] = value));
+
+      try {
+        const airtableBaseId = 'appDAQQCWt0UluPcw'; // Replace with your Airtable Base ID
+        const airtableTableId = 'tbluo9m048kDdfMvw'; // Use the table ID provided in your screenshot
+        const airtableApiKey = 'patGOV9ZOr0At0Fp4.fba4ab7f22a52b37016bbf6906235385027de9e02531160d83603a464423d3a1'; // Your API Key
+
+        const airtableUrl = `https://api.airtable.com/v0/${airtableBaseId}/${airtableTableId}`;
+        const CurrentDate = getCurrentDateTime()
+
+        const response = await fetch(airtableUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${airtableApiKey}`
+          },
+          body: JSON.stringify({
+            fields: {
+              Name: data.Name,
+              Email: data.Email,
+              "Phone Number": data["Phone Number"],
+              "Issue Summary": data["Issue Summary"],
+              "Ticket Number": data["Ticket Number"],
+              "Date": CurrentDate
+            }
+          })
+        });
+
+        if (response.ok) {
+          document.getElementById('supportForm').style.display = 'none';
+          document.getElementById('successMessage').style.display = 'block';
+          document.getElementById('ticketNumberDisplay').textContent = ticketNumber;
+        } else {
+          console.error('Failed to submit data to Airtable:', response.statusText);
+        }
+      } catch (error) {
+        console.error('Error submitting data to Airtable:', error);
+      } finally {
+        submitButton.disabled = false;
+        buttonText.style.display = 'inline';
+        buttonLoader.style.display = 'none';
+        validateForm();
+      }
+    });
+
+    validateForm();
   </script>
 </body>
 </html>
