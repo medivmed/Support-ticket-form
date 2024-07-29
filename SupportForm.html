@@ -229,6 +229,25 @@
       return ticketNumber;
     }
 
+    async function classifyIssue(issueSummary) {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer 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'
+        },
+        body: JSON.stringify({
+            model: 'gpt-4',
+            messages: [{ role: 'user', content: `Classify the following issue summary as either "Technical agent support" or "Dev support". If the issue is related to something broken in the website, a bug, or a feature not working in the app, classify it as "Dev support". Otherwise, classify it as "Technical agent support".Issue Summary: ${issueSummary}` }],
+            max_tokens: 10
+        })
+    });
+
+    const data = await response.json();
+    const classification = data.choices[0].message.content.trim();
+    return classification;
+}
+
     document.getElementById('nameInput').addEventListener('blur', function() {
       validateField(this);
     });
@@ -300,6 +319,7 @@
 
         const airtableUrl = `https://api.airtable.com/v0/${airtableBaseId}/${airtableTableId}`;
         const CurrentDate = getCurrentDateTime()
+        const TicketTypeByAi = await classifyIssue(data["Issue Summary"])
 
         const response = await fetch(airtableUrl, {
           method: 'POST',
@@ -315,7 +335,8 @@
               "Issue Summary": data["Issue Summary"],
               "Ticket Number": data["Ticket Number"],
               "Date": CurrentDate,
-              "Ticket Status": 'Escalated'
+              "Ticket Status": 'Escalated',
+              "Ticket Type": TicketTypeByAi
             }
           })
         });
