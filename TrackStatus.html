@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Ticket Status</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif; /* Apply Nunito font */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center all items horizontally */
+        }
+        h2 {
+            font-weight: 600; /* Apply bold weight */
+            background: linear-gradient(45deg, #00C4CC, #0066CC); /* Gradient background */
+            -webkit-background-clip: text; /* For Webkit browsers */
+            -webkit-text-fill-color: transparent; /* For Webkit browsers */
+            background-clip: text; /* For non-Webkit browsers */
+            text-fill-color: transparent; /* For non-Webkit browsers */
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px;
+            border: none;
+            background: linear-gradient(45deg, #00C4CC, #0066CC); /* Gradient background */
+            color: #fff;
+            border-radius: 5px;
+            cursor: not-allowed; /* Show as not clickable */
+            opacity: 0.6; /* Show as disabled */
+            width: 100%; /* Ensure the button takes the full width of the container */
+            text-align: center; /* Center text horizontally */
+            position: relative; /* For positioning text and loader */
+        }
+        button.enabled {
+            cursor: pointer; /* Change to pointer when enabled */
+            opacity: 1; /* Remove disabled opacity */
+        }
+        button:disabled {
+            cursor: not-allowed; /* Ensure the cursor is not allowed when disabled */
+        }
+        button .button-text {
+            display: inline; /* Show text by default */
+        }
+        button.checking .button-text {
+            display: none; /* Hide text when loading */
+        }
+        button.checking::after {
+            content: 'Checking...'; /* Show "Checking..." text */
+            display: inline-block;
+            color: #fff;
+        }
+        .status {
+            margin-top: 10px;
+            text-align: center; /* Center the status text */
+        }
+        .hidden {
+            display: none; /* Utility class to hide elements */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 id="statusTitle">Check Ticket Status</h2>
+        <div class="error" id="errorMessage">Please enter your ticket number.</div>
+        <input type="text" id="ticketNumber" placeholder="Enter Ticket Number" oninput="checkInputLength()">
+        <button id="checkStatusButton" onclick="checkStatus()" disabled>
+            <span class="button-text">Check Status</span>
+        </button>
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        const airtableBaseId = 'appDAQQCWt0UluPcw'; // Replace with your Airtable Base ID
+        const airtableTableId = 'tbluo9m048kDdfMvw'; // Use the table ID provided in your screenshot
+        const airtableApiKey = 'patGOV9ZOr0At0Fp4.fba4ab7f22a52b37016bbf6906235385027de9e02531160d83603a464423d3a1'; // Your API Key
+
+        function checkInputLength() {
+            const ticketNumber = document.getElementById('ticketNumber').value;
+            const button = document.getElementById('checkStatusButton');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            if (ticketNumber.length >= 8) {
+                button.disabled = false;
+                button.classList.add('enabled');
+                errorMessage.style.display = 'none'; // Hide error message when input is valid
+            } else {
+                button.disabled = true;
+                button.classList.remove('enabled');
+                errorMessage.style.display = 'block'; // Show error message when input is invalid
+            }
+        }
+
+        async function checkStatus() {
+            const ticketNumber = document.getElementById('ticketNumber').value;
+            const statusElement = document.getElementById('status');
+            const button = document.getElementById('checkStatusButton');
+            const title = document.getElementById('statusTitle');
+
+            if (!ticketNumber) {
+                statusElement.textContent = 'Please enter a ticket number.';
+                return;
+            }
+
+            // Show "Checking..." and disable button
+            button.classList.add('checking');
+            button.disabled = true;
+
+            const inputField = document.getElementById('ticketNumber');
+            const statusButton = document.getElementById('checkStatusButton');
+
+            const url = `https://api.airtable.com/v0/${airtableBaseId}/${airtableTableId}?filterByFormula={Ticket Number}="${ticketNumber}"`;
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        Authorization: `Bearer ${airtableApiKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error('Error:', data.error);
+                    statusElement.textContent = `Error: ${data.error.message}`;
+                    return;
+                }
+
+                if (data.records.length === 0) {
+                    statusElement.textContent = 'Ticket not found, please verify your ticket number and try again!';
+                } else {
+                    const ticket = data.records[0];
+                    const status = ticket.fields['Ticket Status']; // Use exact field name with spaces
+                    let message = '';
+
+                    switch (status) {
+                case 'In progress':
+                  message = '🛠️ We are currently working on it. You will receive an email once the issue is fixed.';
+                 break;
+                case 'Escalated':
+                 message = '🚀 We have received your issue and will start working on it soon. Keep tracking here and watch your email for updates.';
+                  break;
+                case 'Completed':
+                 message = '✅ The issue has been fixed. Thank you for your patience.';
+                  break;
+                default:
+                  message = '❓ Status information is not available.';
+                  break;
+                 } 
+
+                    
+                    statusElement.innerHTML = `Ticket Status: <strong>${status}</strong><br>${message}`;
+                    
+                    // Hide input field and button, and update title
+                    inputField.classList.add('hidden');
+                    statusButton.classList.add('hidden');
+                    title.textContent = 'Current Status';
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                statusElement.textContent = 'An error occurred while checking the status.';
+            } finally {
+                // Reset button text and enable it
+                button.classList.remove('checking');
+                button.classList.add('enabled'); // Show button again if needed
+            }
+        }
+
+        // Initialize the form with error message visible
+        document.getElementById('errorMessage').style.display = 'block';
+    </script>
+</body>
+</html>
