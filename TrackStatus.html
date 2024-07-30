@@ -7,14 +7,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Nunito', sans-serif;
+            font-family: 'Nunito', sans-serif; /* Apply Nunito font */
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             background-color: #f4f4f4;
-            margin: 0; /* Remove default margin */
-            padding: 0; /* Remove default padding */
         }
         .container {
             background: #fff;
@@ -24,16 +22,15 @@
             width: 300px;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            box-sizing: border-box; /* Include padding and border in element's total width and height */
+            align-items: center; /* Center all items horizontally */
         }
         h2 {
-            font-weight: 600;
-            background: linear-gradient(45deg, #00C4CC, #0066CC);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-fill-color: transparent;
+            font-weight: 600; /* Apply bold weight */
+            background: linear-gradient(45deg, #00C4CC, #0066CC); /* Gradient background */
+            -webkit-background-clip: text; /* For Webkit browsers */
+            -webkit-text-fill-color: transparent; /* For Webkit browsers */
+            background-clip: text; /* For non-Webkit browsers */
+            text-fill-color: transparent; /* For non-Webkit browsers */
             text-align: center;
             margin-bottom: 20px;
         }
@@ -48,44 +45,43 @@
             color: red;
             font-size: 14px;
             margin-bottom: 10px;
-            text-align: center; /* Center error text */
         }
         button {
             padding: 10px;
             border: none;
-            background: linear-gradient(45deg, #00C4CC, #0066CC);
+            background: linear-gradient(45deg, #00C4CC, #0066CC); /* Gradient background */
             color: #fff;
             border-radius: 5px;
-            cursor: not-allowed;
-            opacity: 0.6;
-            width: 100%;
-            text-align: center;
-            position: relative;
+            cursor: not-allowed; /* Show as not clickable */
+            opacity: 0.6; /* Show as disabled */
+            width: 100%; /* Ensure the button takes the full width of the container */
+            text-align: center; /* Center text horizontally */
+            position: relative; /* For positioning text and loader */
         }
         button.enabled {
-            cursor: pointer;
-            opacity: 1;
+            cursor: pointer; /* Change to pointer when enabled */
+            opacity: 1; /* Remove disabled opacity */
         }
         button:disabled {
-            cursor: not-allowed;
+            cursor: not-allowed; /* Ensure the cursor is not allowed when disabled */
         }
         button .button-text {
-            display: inline;
+            display: inline; /* Show text by default */
         }
         button.checking .button-text {
-            display: none;
+            display: none; /* Hide text when loading */
         }
         button.checking::after {
-            content: 'Checking...';
+            content: 'Checking...'; /* Show "Checking..." text */
             display: inline-block;
             color: #fff;
         }
         .status {
             margin-top: 10px;
-            text-align: center;
+            text-align: center; /* Center the status text */
         }
         .hidden {
-            display: none;
+            display: none; /* Utility class to hide elements */
         }
     </style>
 </head>
@@ -100,12 +96,10 @@
         <div id="status" class="status"></div>
     </div>
 
-    <iframe src="{TrackStatusForm}" style="width:100%; height:100%;" frameborder="0" allowfullscreen></iframe>
-
     <script>
-        const airtableBaseId = 'appDAQQCWt0UluPcw';
-        const airtableTableId = 'tbluo9m048kDdfMvw';
-        const airtableApiKey = 'patGOV9ZOr0At0Fp4.fba4ab7f22a52b37016bbf6906235385027de9e02531160d83603a464423d3a1';
+        const airtableBaseId = 'appDAQQCWt0UluPcw'; // Replace with your Airtable Base ID
+        const airtableTableId = 'tbluo9m048kDdfMvw'; // Use the table ID provided in your screenshot
+        const airtableApiKey = 'patGOV9ZOr0At0Fp4.fba4ab7f22a52b37016bbf6906235385027de9e02531160d83603a464423d3a1'; // Your API Key
 
         function checkInputLength() {
             const ticketNumber = document.getElementById('ticketNumber').value;
@@ -115,11 +109,11 @@
             if (ticketNumber.length >= 8) {
                 button.disabled = false;
                 button.classList.add('enabled');
-                errorMessage.style.display = 'none';
+                errorMessage.style.display = 'none'; // Hide error message when input is valid
             } else {
                 button.disabled = true;
                 button.classList.remove('enabled');
-                errorMessage.style.display = 'block';
+                errorMessage.style.display = 'block'; // Show error message when input is invalid
             }
         }
 
@@ -134,6 +128,7 @@
                 return;
             }
 
+            // Show "Checking..." and disable button
             button.classList.add('checking');
             button.disabled = true;
 
@@ -161,25 +156,28 @@
                     statusElement.textContent = 'Ticket not found, please verify your ticket number and try again!';
                 } else {
                     const ticket = data.records[0];
-                    const status = ticket.fields['Ticket Status'];
+                    const status = ticket.fields['Ticket Status']; // Use exact field name with spaces
                     let message = '';
 
                     switch (status) {
-                        case 'In progress':
-                            message = '🛠️ We are currently working on it. You will receive an email once the issue is fixed.';
-                            break;
-                        case 'Escalated':
-                            message = '🚀 We have received your issue and will start working on it soon. Keep tracking here and watch your email for updates.';
-                            break;
-                        case 'Completed':
-                            message = '✅ The issue has been fixed. Thank you for your patience.';
-                            break;
-                        default:
-                            message = '❓ Status information is not available.';
-                            break;
-                    } 
+                case 'In progress':
+                  message = '🛠️ We are currently working on it. You will receive an email once the issue is fixed.';
+                 break;
+                case 'Escalated':
+                 message = '🚀 We have received your issue and will start working on it soon. Keep tracking here and watch your email for updates.';
+                  break;
+                case 'Completed':
+                 message = '✅ The issue has been fixed. Thank you for your patience.';
+                  break;
+                default:
+                  message = '❓ Status information is not available.';
+                  break;
+                 } 
 
+                    
                     statusElement.innerHTML = `Ticket Status: <strong>${status}</strong><br>${message}`;
+                    
+                    // Hide input field and button, and update title
                     inputField.classList.add('hidden');
                     statusButton.classList.add('hidden');
                     title.textContent = 'Current Status';
@@ -188,11 +186,13 @@
                 console.error('Fetch error:', error);
                 statusElement.textContent = 'An error occurred while checking the status.';
             } finally {
+                // Reset button text and enable it
                 button.classList.remove('checking');
-                button.classList.add('enabled');
+                button.classList.add('enabled'); // Show button again if needed
             }
         }
 
+        // Initialize the form with error message visible
         document.getElementById('errorMessage').style.display = 'block';
     </script>
 </body>
