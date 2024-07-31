@@ -14,13 +14,15 @@
             height: 100vh;
             background-color: #f4f4f4;
             margin: 0;
+            touch-action: manipulation;
         }
         .container {
             background: #fff;
             padding: 15px;
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 250px;
+            width: 90%;
+            max-width: 350px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -36,7 +38,7 @@
             margin: 0 0 15px 0;
         }
         input[type="text"] {
-            width: calc(100% - 20px);
+            width: 100%;
             padding: 8px;
             margin-bottom: 10px;
             border: 1px solid #ddd;
